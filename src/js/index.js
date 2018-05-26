@@ -1,11 +1,12 @@
 import { displayAreas } from './areas'
 import {
     getDirections,
+    getDropoutNumber,
     setDestination
 } from './directions'
 import swal from 'sweetalert'
 
-const map = L.map('mapid').setView([48.8566, 2.3522], 11);
+const map = L.map('mapid').setView([48.81, 2.3522], 12);
 const locateMeBtn = document.querySelector('.locate-me')
 const areasBtn = document.querySelector('.see-areas')
 const directionBtn = document.querySelector('.get-dir')
@@ -21,7 +22,7 @@ locateMeBtn.addEventListener('click', () => {
     if (isLocated) {
         return;
     }
-    const marker = L.marker([48.78, 2.3622]).addTo(map);
+    const marker = L.marker([48.76, 2.3622]).addTo(map);
     isLocated = true;
 })
 
@@ -30,7 +31,7 @@ areasBtn.addEventListener('click', () => {
 })
 
 directionBtn.addEventListener('click', () => {
-    getDirections(map, isLocated);
+  swal("Let's go!", `The best route requires you to drop your car at the dropout number ${getDropoutNumber()}`, "success");
 })
 
 map.touchZoom.disable();
@@ -38,5 +39,5 @@ map.doubleClickZoom.disable();
 map.scrollWheelZoom.disable();
 
 map.on('click', (e) => {
-    setDestination(e, map);
+  getDirections(e, map, isLocated);
 });

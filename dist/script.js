@@ -308,7 +308,7 @@ var _sweetalert = _interopRequireDefault(__webpack_require__(1));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var map = L.map('mapid').setView([48.8566, 2.3522], 11);
+var map = L.map('mapid').setView([48.81, 2.3522], 12);
 var locateMeBtn = document.querySelector('.locate-me');
 var areasBtn = document.querySelector('.see-areas');
 var directionBtn = document.querySelector('.get-dir');
@@ -323,20 +323,20 @@ locateMeBtn.addEventListener('click', function () {
     return;
   }
 
-  var marker = L.marker([48.78, 2.3622]).addTo(map);
+  var marker = L.marker([48.76, 2.3622]).addTo(map);
   isLocated = true;
 });
 areasBtn.addEventListener('click', function () {
   (0, _areas.displayAreas)(map);
 });
 directionBtn.addEventListener('click', function () {
-  (0, _directions.getDirections)(map, isLocated);
+  (0, _sweetalert.default)("Let's go!", "The best route requires you to drop your car at the dropout number ".concat((0, _directions.getDropoutNumber)()), "success");
 });
 map.touchZoom.disable();
 map.doubleClickZoom.disable();
 map.scrollWheelZoom.disable();
 map.on('click', function (e) {
-  (0, _directions.setDestination)(e, map);
+  (0, _directions.getDirections)(e, map, isLocated);
 });
 
 /***/ }),
@@ -350,6 +350,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.getDirections = getDirections;
+exports.getDropoutNumber = getDropoutNumber;
 exports.setDestination = setDestination;
 
 var _areas = __webpack_require__(0);
@@ -362,20 +363,27 @@ var destination = null;
 var directions = null;
 var destLat = null;
 var destLng = null;
+var firstDirections = null;
+var secondDirections = null;
+var parkingDirections = null;
+var parking = null;
+var dropoutNumber = null;
 
-function getDirections(map, isLocated) {
+function getRandomArbitrary(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function getDirections(e, map, isLocated) {
+  clearDirections(map);
+  destLat = e.latlng.lat;
+  destLng = e.latlng.lng;
+  destination && destination.removeFrom(map);
+  parking && parking.removeFrom(map);
+  destination = L.marker([destLat, destLng]).addTo(map);
+
   if (isLocated === false) {
     (0, _sweetalert.default)({
       title: "Please locate yourself first",
-      icon: "error"
-    });
-    return;
-  }
-
-  if (destination === null) {
-    (0, _sweetalert.default)({
-      title: "Please choose a destination first",
-      text: "Simply tap on the map to decide where you want to go",
       icon: "error"
     });
     return;
@@ -388,19 +396,44 @@ function getDirections(map, isLocated) {
   xhr.onreadystatechange = function () {
     if (xhr.readyState === XMLHttpRequest.DONE) {
       var distances = JSON.parse(xhr.responseText);
-      var pointA = new L.LatLng(48.78, 2.3622);
-      var pointB = new L.LatLng(distances.xCoor, distances.yCoor);
+      dropoutNumber = distances.number;
+      var dropoutX = distances.xCoor;
+      var dropoutY = distances.yCoor;
+      var suggestesParking = [dropoutX + getRandomArbitrary(-0.01, 0.01), dropoutY + getRandomArbitrary(-0.01, 0.01)];
+      var icon = L.icon({
+        iconUrl: "icons/parking.png",
+        iconSize: [18, 18],
+        iconAnchor: [0, 0]
+      });
+      parking = L.marker(suggestesParking, {
+        icon: icon
+      }).addTo(map);
+      var pointA = new L.LatLng(48.76, 2.3622);
+      var pointB = new L.LatLng(dropoutX, dropoutY);
       var pointC = new L.LatLng(destLat, destLng);
-      var pointList = [pointA, pointB, pointC];
+      var parkingPoint = new L.LatLng(suggestesParking[0], suggestesParking[1]);
+      var firstPath = [pointA, pointB];
+      var secondPath = [pointB, pointC];
+      var parkingPath = [pointB, parkingPoint];
       clearDirections(map);
-      directions = new L.Polyline(pointList, {
+      firstDirections = new L.Polyline(firstPath, {
         color: 'blue',
         weight: 5,
         opacity: 0.7,
         smoothFactor: 1
-      });
-      directions.addTo(map);
-      (0, _sweetalert.default)("Let's go!", "The best route requires you to drop your car at the dropout number ".concat(distances.number), "success");
+      }).addTo(map);
+      secondDirections = new L.Polyline(secondPath, {
+        color: 'black',
+        weight: 5,
+        opacity: 0.7,
+        smoothFactor: 1
+      }).addTo(map);
+      parkingDirections = new L.Polyline(parkingPath, {
+        color: 'red',
+        weight: 5,
+        opacity: 0.7,
+        smoothFactor: 1
+      }).addTo(map);
     }
   };
 
@@ -408,17 +441,17 @@ function getDirections(map, isLocated) {
   xhr.send();
 }
 
-function clearDirections(map) {
-  directions && directions.removeFrom(map);
+function getDropoutNumber() {
+  return dropoutNumber;
 }
 
-function setDestination(e, map) {
-  clearDirections(map);
-  destLat = e.latlng.lat;
-  destLng = e.latlng.lng;
-  destination && destination.removeFrom(map);
-  destination = L.marker([destLat, destLng]).addTo(map);
+function clearDirections(map) {
+  firstDirections && firstDirections.removeFrom(map);
+  secondDirections && secondDirections.removeFrom(map);
+  parkingDirections && parkingDirections.removeFrom(map);
 }
+
+function setDestination(e, map) {}
 
 /***/ }),
 /* 7 */
