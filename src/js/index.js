@@ -1,7 +1,7 @@
 import { displayAreas } from './areas'
-import { 
+import {
     getDirections,
-    setDestination 
+    setDestination
 } from './directions'
 import swal from 'sweetalert'
 
@@ -24,7 +24,6 @@ locateMeBtn.addEventListener('click', () => {
     const marker = L.marker([48.78, 2.3622]).addTo(map);
     isLocated = true;
 })
-
 
 areasBtn.addEventListener('click', () => {
     displayAreas(map);

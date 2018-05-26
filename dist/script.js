@@ -73,6 +73,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.getAreas = getAreas;
+exports.getDropouts = getDropouts;
 exports.buildAreas = buildAreas;
 exports.displayAreas = displayAreas;
 
@@ -99,37 +101,72 @@ function getDropouts() {
   return [[48.828, 2.3122], [48.84, 2.3922], [48.835, 2.3622], [48.83, 2.3222]];
 }
 
-function buildAreas(map) {
-  var areas = getAreas();
-  var dropouts = getDropouts();
-  areas.forEach(function (area) {
-    var color = 'grey';
+function getAreas() {
+  return new Promise(function (resolve, reject) {
+    var xhr = new XMLHttpRequest();
 
-    if (area.busy <= 40) {
-      color = 'green';
-    } else if (area.busy <= 75) {
-      color = 'orange';
-    } else {
-      color = 'red';
-    }
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        resolve(JSON.parse(xhr.responseText));
+      }
+    };
 
-    L.polygon(area.coordinates, {
-      color: color,
-      fillColor: color,
-      fillOpacity: 0.3
-    }).addTo(map);
+    xhr.open('GET', 'http://localhost:3000/areas', true);
+    xhr.send();
   });
-  var dropoutCounter = 1;
-  dropouts.forEach(function (dropout) {
-    var icon = L.icon({
-      iconUrl: "icons/".concat(dropoutCounter.toString(), ".png"),
-      iconSize: [18, 18],
-      iconAnchor: [0, 0]
+}
+
+function getDropouts() {
+  return new Promise(function (resolve, reject) {
+    var xhr = new XMLHttpRequest();
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        resolve(JSON.parse(xhr.responseText));
+      }
+    };
+
+    xhr.open('GET', 'http://localhost:3000/dropouts', true);
+    xhr.send();
+  });
+}
+
+function buildAreas(map) {
+  var areasPromise = getAreas();
+  var dropoutsPromise = getDropouts();
+  Promise.all([areasPromise, dropoutsPromise]).then(function (res) {
+    var areas = res[0];
+    var dropouts = res[1];
+    areas.forEach(function (area) {
+      var color = 'grey';
+
+      if (area.freeParkingPercentage <= 40) {
+        color = 'green';
+      } else if (area.freeParkingPercentage <= 75) {
+        color = 'orange';
+      } else {
+        color = 'red';
+      }
+
+      L.polygon(area.coordinates, {
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.3
+      }).addTo(map);
     });
-    L.marker(dropout, {
-      icon: icon
-    }).addTo(map);
-    dropoutCounter++;
+    var dropoutCounter = 1;
+    dropouts.forEach(function (dropout) {
+      var mapMarker = [dropout.xCoor, dropout.yCoor];
+      var icon = L.icon({
+        iconUrl: "icons/".concat(dropoutCounter.toString(), ".png"),
+        iconSize: [18, 18],
+        iconAnchor: [0, 0]
+      });
+      L.marker(mapMarker, {
+        icon: icon
+      }).addTo(map);
+      dropoutCounter++;
+    });
   });
 }
 
@@ -345,19 +382,30 @@ function getDirections(map, isLocated) {
   }
 
   (0, _areas.displayAreas)(map);
-  (0, _sweetalert.default)("Let's go!", "The best route requires you to drop your car at the dropout number 3", "success");
-  var pointA = new L.LatLng(48.78, 2.3622);
-  var pointB = new L.LatLng(48.835, 2.37);
-  var pointC = new L.LatLng(destLat, destLng);
-  var pointList = [pointA, pointB, pointC];
-  clearDirections(map);
-  directions = new L.Polyline(pointList, {
-    color: 'blue',
-    weight: 5,
-    opacity: 0.7,
-    smoothFactor: 1
-  });
-  directions.addTo(map);
+  var url = "http://localhost:3000/get-best-distance?sx=".concat(48.78, "&sy=", 2.3622, "&dx=", destLat, "&dy=").concat(destLng);
+  var xhr = new XMLHttpRequest();
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === XMLHttpRequest.DONE) {
+      var distances = JSON.parse(xhr.responseText);
+      var pointA = new L.LatLng(48.78, 2.3622);
+      var pointB = new L.LatLng(distances.xCoor, distances.yCoor);
+      var pointC = new L.LatLng(destLat, destLng);
+      var pointList = [pointA, pointB, pointC];
+      clearDirections(map);
+      directions = new L.Polyline(pointList, {
+        color: 'blue',
+        weight: 5,
+        opacity: 0.7,
+        smoothFactor: 1
+      });
+      directions.addTo(map);
+      (0, _sweetalert.default)("Let's go!", "The best route requires you to drop your car at the dropout number ".concat(distances.number), "success");
+    }
+  };
+
+  xhr.open('GET', url, true);
+  xhr.send();
 }
 
 function clearDirections(map) {

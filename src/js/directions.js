@@ -24,22 +24,34 @@ export function getDirections(map, isLocated) {
   }
   displayAreas(map);
 
-  swal("Let's go!", "The best route requires you to drop your car at the dropout number 3", "success");
 
-  const pointA = new L.LatLng(48.78, 2.3622);
-  const pointB = new L.LatLng(48.835, 2.37);
-  const pointC = new L.LatLng(destLat, destLng);
-  const pointList = [pointA, pointB, pointC];
+  const url = `http://localhost:3000/get-best-distance?sx=${48.78}&sy=${2.3622}&dx=${destLat}&dy=${destLng}`
 
-  clearDirections(map)
+  const xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = () => {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        const distances = JSON.parse(xhr.responseText);
+        const pointA = new L.LatLng(48.78, 2.3622);
+        const pointB = new L.LatLng(distances.xCoor, distances.yCoor);
+        const pointC = new L.LatLng(destLat, destLng);
+        const pointList = [pointA, pointB, pointC];
 
-  directions = new L.Polyline(pointList, {
-      color: 'blue',
-      weight: 5,
-      opacity: 0.7,
-      smoothFactor: 1
-  });
-  directions.addTo(map);
+        clearDirections(map)
+
+        directions = new L.Polyline(pointList, {
+            color: 'blue',
+            weight: 5,
+            opacity: 0.7,
+            smoothFactor: 1
+        });
+        directions.addTo(map);
+
+        swal("Let's go!", `The best route requires you to drop your car at the dropout number ${distances.number}`, "success");
+      }
+  }
+  xhr.open('GET', url, true);
+  xhr.send();
+
 }
 
 function clearDirections(map) {
