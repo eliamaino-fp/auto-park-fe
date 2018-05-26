@@ -1,4 +1,9 @@
-import { buildAreas } from './areas'
+import { displayAreas } from './areas'
+import { 
+    getDirections,
+    setDestination 
+} from './directions'
+import swal from 'sweetalert'
 
 const map = L.map('mapid').setView([48.8566, 2.3522], 11);
 const locateMeBtn = document.querySelector('.locate-me')
@@ -11,31 +16,28 @@ L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=p
     id: 'mapbox.streets'
 }).addTo(map);
 
+let isLocated = false;
 locateMeBtn.addEventListener('click', () => {
+    if (isLocated) {
+        return;
+    }
     const marker = L.marker([48.78, 2.3622]).addTo(map);
+    isLocated = true;
 })
 
+
 areasBtn.addEventListener('click', () => {
-    buildAreas(map)
+    displayAreas(map);
 })
 
 directionBtn.addEventListener('click', () => {
-    infoText.innerHTML = 'The best route requires you to drop your car at the dropout number 3'
+    getDirections(map, isLocated);
 })
 
-// disable drag and zoom handlers
-// map.dragging.disable();
 map.touchZoom.disable();
 map.doubleClickZoom.disable();
 map.scrollWheelZoom.disable();
 
-const popup = L.popup();
-
-function onMapClick(e) {
-    popup
-        .setLatLng(e.latlng)
-        .setContent("You want to go at " + e.latlng.toString())
-        .openOn(map);
-}
-
-map.on('click', onMapClick);
+map.on('click', (e) => {
+    setDestination(e, map);
+});

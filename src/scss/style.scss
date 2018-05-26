@@ -1,1 +1,44 @@
-#mapid { width: 600px; height: 400px; }
+body {
+    background-color: #fedc47;
+    background: linear-gradient(to right, #fedc47, #E4C63F, #CDB238, #E4C63F, #fedc47);
+    font-family: 'Roboto', sans-serif;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.logo {
+    max-width: 64px;
+    align-self: center;
+}
+
+.map { 
+    width: 800px; 
+    height: 500px; 
+    align-self: center;
+    -webkit-box-shadow:0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    -moz-box-shadow:0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    box-shadow:0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    margin: 32px;
+}
+
+.action-buttons {
+    align-self: center;
+    display: flex;
+    width: 800px;
+
+    button {
+        margin: 1px;
+        border: none;
+        background-color: black;
+        color: #fedc47;
+        cursor: pointer;
+        width: 100%;
+        padding: 16px;
+        text-transform: uppercase;
+    }
+
+
+}

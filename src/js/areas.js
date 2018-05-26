@@ -92,3 +92,12 @@ export function buildAreas(map) {
         dropoutCounter++
     })
 }
+
+let hasAreas = false;
+export function displayAreas(map) {
+    if (hasAreas) {
+        return;
+    }
+    buildAreas(map)
+    hasAreas = true;
+}
